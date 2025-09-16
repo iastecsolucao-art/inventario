@@ -1,21 +1,10 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center">
-      {/* Topo */}
-      <header className="w-full bg-blue-600 text-white p-4 flex justify-between items-center">
-        <h1 className="font-bold text-lg">📦 App de Inventário</h1>
-        {session && (
-          <span className="text-sm">
-            👋 Olá, {session.user?.name}
-          </span>
-        )}
-      </header>
-
-      {/* Conteúdo principal */}
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <main className="flex flex-col flex-1 items-center justify-center text-center px-6">
         {!session ? (
           <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md">
@@ -45,7 +34,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Rodapé */}
       <footer className="w-full bg-gray-200 text-center py-4 text-sm text-gray-600">
         iastec 2025 - versão 1
       </footer>
