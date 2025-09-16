@@ -22,7 +22,6 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
 
     document.body.appendChild(script);
 
-    // Cleanup quando o componente desmontar
     return () => {
       if (script.parentNode) {
         script.parentNode.removeChild(script);
@@ -32,8 +31,16 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
 
   return (
     <SessionProvider session={session}>
+      {/* Navbar fixo no topo */}
       <Navbar />
-      <Component {...pageProps} />
+      
+      {/* 
+        Main recebe padding-top para NÃO deixar o conteúdo escondido 
+        Usei pt-16 (64px) pq a Navbar tem cerca de 56px (h-14)
+      */}
+      <main className="pt-16">
+        <Component {...pageProps} />
+      </main>
     </SessionProvider>
   );
 }
