@@ -8,7 +8,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
   useEffect(() => {
     // Cria o script dinamicamente
     const script = document.createElement("script");
-    script.src = "http://chat.iastec.servicos.ws/packs/js/sdk.js";
+    script.src = "https://chat.iastec.servicos.ws/packs/js/sdk.js";
     script.async = true;
 
     script.onload = () => {
