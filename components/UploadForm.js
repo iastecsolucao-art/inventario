@@ -6,6 +6,22 @@ export default function UploadForm() {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
 
+  // exemplos de formato por tipo
+  const exemplos = {
+    produto: {
+      cabecalho: "descricao,codbarra,empresa",
+      exemplo: "Caneta Azul,1234567890123,iastec"
+    },
+    usuario: {
+      cabecalho: "nome,email",
+      exemplo: "Adriano Silva,adriano@email.com"
+    },
+    contagem: {
+      cabecalho: "area,codbarra,loja,data",
+      exemplo: "Mesa1,1234567890123,Eldorado,2025-09-16"
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) {
       alert("Escolha um arquivo!");
@@ -21,6 +37,8 @@ export default function UploadForm() {
     }
   };
 
+  const ex = exemplos[tipo];
+
   return (
     <div className="p-6 max-w-lg mx-auto border rounded shadow-md bg-white">
       <h2 className="text-xl font-bold mb-3">Upload de Cadastros</h2>
@@ -34,6 +52,14 @@ export default function UploadForm() {
         <option value="usuario">Usuários</option>
         <option value="contagem">Contagem</option>
       </select>
+
+      {/* Exemplo dinâmico por tipo */}
+      <div className="mb-3 text-sm bg-gray-50 p-2 rounded border">
+        <p><b>Formato esperado:</b></p>
+        <p className="font-mono text-xs bg-gray-200 px-2 py-1 rounded mb-1">{ex.cabecalho}</p>
+        <p className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{ex.exemplo}</p>
+        <p className="text-[11px] text-gray-500 mt-1">Aceita .csv, .xlsx ou .txt</p>
+      </div>
 
       <input
         type="file"

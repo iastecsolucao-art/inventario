@@ -24,6 +24,7 @@ export default function Navbar({ session }) {
             <Link href="/produtos">Cadastro Produto</Link>
             <Link href="/listar_produtos">Lista de Produtos</Link>
             <Link href="/relatorios">Relatórios</Link>
+            <Link href="/download" className="hover:underline">Download</Link> {/* 👈 novo */}
           </div>
 
           <div className="flex items-center gap-3">

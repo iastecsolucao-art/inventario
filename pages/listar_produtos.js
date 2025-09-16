@@ -10,6 +10,7 @@ export default function ListaProdutos() {
   const [filtroDescricao, setFiltroDescricao] = useState("");
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroCreated, setFiltroCreated] = useState("");
+  const [filtroNome, setFiltroNome] = useState("");  // novo filtro p/ nome=empresa
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -54,7 +55,8 @@ export default function ListaProdutos() {
       (filtroCreated ? 
         (p.created_at && new Date(p.created_at).toLocaleString().toLowerCase().includes(filtroCreated.toLowerCase())) 
         : true
-      )
+      ) &&
+      (filtroNome ? (p.nome || "").toLowerCase().includes(filtroNome.toLowerCase()) : true) // novo filtro
     );
   });
 
@@ -113,6 +115,9 @@ export default function ListaProdutos() {
                 <th className="px-4 py-2 text-left cursor-pointer" onClick={() => handleOrdenar("empresa_id")}>
                   Empresa ID {ordenarColuna==="empresa_id" ? (ordemAsc ? "⬆️" : "⬇️") : ""}
                 </th>
+                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => handleOrdenar("nome")}>
+                  Empresa Nome {ordenarColuna==="nome" ? (ordemAsc ? "⬆️" : "⬇️") : ""}
+                </th>
                 <th className="px-4 py-2 text-left cursor-pointer" onClick={() => handleOrdenar("created_at")}>
                   Criado em {ordenarColuna==="created_at" ? (ordemAsc ? "⬆️" : "⬇️") : ""}
                 </th>
@@ -123,6 +128,7 @@ export default function ListaProdutos() {
                 <th><input className="p-1 w-full" placeholder="Código" value={filtroCodigo} onChange={(e)=>setFiltroCodigo(e.target.value)} /></th>
                 <th><input className="p-1 w-full" placeholder="Descrição" value={filtroDescricao} onChange={(e)=>setFiltroDescricao(e.target.value)} /></th>
                 <th><input className="p-1 w-full" placeholder="Empresa ID" value={filtroEmpresa} onChange={(e)=>setFiltroEmpresa(e.target.value)} /></th>
+                <th><input className="p-1 w-full" placeholder="Empresa Nome" value={filtroNome} onChange={(e)=>setFiltroNome(e.target.value)} /></th>
                 <th><input className="p-1 w-full" placeholder="Data" value={filtroCreated} onChange={(e)=>setFiltroCreated(e.target.value)} /></th>
               </tr>
             </thead>
@@ -133,12 +139,15 @@ export default function ListaProdutos() {
                   <td className="px-4 py-2">{p?.codigo_barra}</td>
                   <td className="px-4 py-2">{p?.descricao}</td>
                   <td className="px-4 py-2">{p?.empresa_id}</td>
-                  <td className="px-4 py-2">{p?.created_at ? new Date(p.created_at).toLocaleString() : ""}</td>
+                  <td className="px-4 py-2">{p?.nome}</td> {/* nova coluna */}
+                  <td className="px-4 py-2">
+                    {p?.created_at ? new Date(p.created_at).toLocaleString() : ""}
+                  </td>
                 </tr>
               ))}
               {produtosPaginados.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-500">
+                  <td colSpan="6" className="text-center py-4 text-gray-500">
                     Nenhum produto encontrado.
                   </td>
                 </tr>
