@@ -1,23 +1,54 @@
-import { signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gray-100">
-      {/* Header fixo */}
-      <header className="w-full fixed top-0 bg-blue-600 p-4 text-white font-bold text-lg text-center shadow">
-        📦 App de Inventário
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center">
+      {/* Topo */}
+      <header className="w-full bg-blue-600 text-white p-4 flex justify-between items-center">
+        <h1 className="font-bold text-lg">📦 App de Inventário</h1>
+        {session && (
+          <span className="text-sm">
+            👋 Olá, {session.user?.name}
+          </span>
+        )}
       </header>
 
-      {/* Conteúdo central */}
-      <div className="bg-white shadow-lg rounded p-8 mt-16 w-80 text-center">
-        <h1 className="text-xl font-bold mb-4">Acesse sua conta</h1>
-        <button
-          onClick={() => signIn("google")}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-        >
-          Entrar com Google
-        </button>
-      </div>
+      {/* Conteúdo principal */}
+      <main className="flex flex-col flex-1 items-center justify-center text-center px-6">
+        {!session ? (
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md">
+            <h2 className="text-xl font-bold mb-4">Acesse sua conta</h2>
+            <button
+              onClick={() => signIn("google")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+            >
+              Entrar com Google
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-xl">
+            <h2 className="text-xl font-bold mb-4">Bem-vindo ao Sistema</h2>
+            <p className="text-gray-700">
+              O App de Inventário permite cadastrar produtos, fazer contagens,
+              gerar relatórios e exportar seus dados 📊.  
+              Use o menu acima para navegar entre as funcionalidades.
+            </p>
+            <button
+              onClick={() => signOut()}
+              className="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded"
+            >
+              Sair
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Rodapé */}
+      <footer className="w-full bg-gray-200 text-center py-4 text-sm text-gray-600">
+        iastec 2025 - versão 1
+      </footer>
     </div>
   );
 }
