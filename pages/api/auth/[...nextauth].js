@@ -9,11 +9,10 @@ export default NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      // Dá pra usar token.email p/ setar admin
-      session.user.role = session.user.email === "admin@empresa.com" ? "admin" : "user";
-      return session;
-    },
+  async redirect({ url, baseUrl }) {
+    // sempre manda para Inventário depois do login
+    return "/contagem";
   },
+},
   secret: process.env.NEXTAUTH_SECRET,
 });
