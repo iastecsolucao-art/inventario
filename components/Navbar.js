@@ -20,6 +20,7 @@ export default function Navbar({ session }) {
             <Link href="/contagem">Inventário</Link>
             <Link href="/produtos">Cadastro Produto</Link>
             <Link href="/listar_produtos">Lista de Produtos</Link>
+            <Link href="/relatorios">Relatórios</Link> {/* 🔹 Novo link */}
           </div>
 
           {/* Botão sair */}
@@ -49,6 +50,7 @@ export default function Navbar({ session }) {
           <Link href="/contagem" className="block">Inventário</Link>
           <Link href="/produtos" className="block">Cadastro Produto</Link>
           <Link href="/listar_produtos" className="block">Lista de Produtos</Link>
+          <Link href="/relatorios" className="block">Relatórios</Link> {/* 🔹 Novo link */}
         </div>
       )}
     </nav>
