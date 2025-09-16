@@ -13,7 +13,7 @@ export default function Navbar() {
         <Link href="/" className="hover:underline">Home</Link> {/* 👈 novo */}
         <Link href="/upload" className="hover:underline">Upload</Link>
         <Link href="/download" className="hover:underline">Download</Link>
-        <Link href="/inventario" className="hover:underline">Inventário</Link>
+        <Link href="/contagem" className="hover:underline">Inventário</Link>
         <Link href="/produtos" className="hover:underline">Cadastro Produto</Link>
         <Link href="/lista" className="hover:underline">Lista de Produtos</Link>
         <Link href="/relatorios" className="hover:underline">Relatórios</Link>
