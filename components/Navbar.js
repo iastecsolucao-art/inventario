@@ -33,7 +33,7 @@ export default function Navbar() {
           <Link href="/" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Home</Link>
           <Link href="/upload" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Upload</Link>
           <Link href="/download" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Download</Link>
-          <Link href="/inventario" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Inventário</Link>
+          <Link href="/contagem" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Inventário</Link>
           <Link href="/produtos" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Cadastro Produto</Link>
           <Link href="/lista" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Lista de Produtos</Link>
           <Link href="/relatorios" onClick={() => setMenuOpen(false)} className="px-4 py-2">Relatórios</Link>
