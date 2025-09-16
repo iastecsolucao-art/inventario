@@ -1,0 +1,345 @@
+import { useState, useRef } from "react";
+
+export default function ContagemSetor() {
+  const [setor, setSetor] = useState("mesa");
+  const [operador, setOperador] = useState(""); 
+  const [loja, setLoja] = useState(""); 
+  const [produtos, setProdutos] = useState([{ codigo_barra: "", descricao: "", quantidade: 1 }]);
+  const [quantidadeLiberada, setQuantidadeLiberada] = useState(false);
+  const [senha, setSenha] = useState("");
+  const [totalSalvo, setTotalSalvo] = useState(0);
+  const [totalPendente, setTotalPendente] = useState(0);
+  const inputRefs = useRef([]);
+
+  // 🔹 Atualiza total salvo no banco
+  const atualizarTotaisDoBanco = async () => {
+    try {
+      const res = await fetch(`https://n8n.iastec.servicos.ws/webhook/total_setor?setor=${setor}`);
+      const data = await res.json();
+      setTotalSalvo(data.total || 0);
+    } catch (err) {
+      console.error("Erro ao buscar total no banco:", err);
+    }
+  };
+
+  const addProduto = () => {
+    const newProdutos = [...produtos, { codigo_barra: "", descricao: "", quantidade: 1 }];
+    setProdutos(newProdutos);
+    setTimeout(() => {
+      const idx = newProdutos.length - 1;
+      inputRefs.current[idx]?.focus();
+    }, 100);
+  };
+
+  const removeProduto = (index) => {
+    const newProdutos = produtos.filter((_, i) => i !== index);
+    setProdutos(newProdutos);
+  };
+
+  const validarProduto = async (index) => {
+    const codigo = produtos[index].codigo_barra;
+    if (!codigo) return;
+
+    try {
+      const res = await fetch(
+        `https://n8n.iastec.servicos.ws/webhook/buscar_produto?codigo_barra=${codigo}`
+      );
+      const data = await res.json();
+      const newProdutos = [...produtos];
+
+      if (data && data.descricao) {
+        newProdutos[index].descricao = data.descricao;
+      } else if (Array.isArray(data) && data.length > 0) {
+        newProdutos[index].descricao = data[0].descricao;
+      } else {
+        newProdutos[index].descricao = "❌ Produto não cadastrado";
+      }
+
+      newProdutos[index].quantidade = 1;
+      setProdutos(newProdutos);
+
+      if (newProdutos[index].descricao !== "❌ Produto não cadastrado") {
+        // ✅ consulta no banco apenas ao validar produto válido
+        await atualizarTotaisDoBanco();
+
+        // 🔹 pendentes ficam só na tela
+        const novosPendentes = newProdutos.filter(
+          (p) => p.codigo_barra && p.descricao && !p.descricao.includes("❌")
+        ).length;
+        setTotalPendente(novosPendentes);
+
+        addProduto();
+      }
+    } catch (err) {
+      console.error("Erro:", err);
+    }
+  };
+
+  const salvarItem = (index) => {
+    validarProduto(index);
+  };
+
+  const liberarQuantidade = () => {
+    if (senha === "iastec") {
+      setQuantidadeLiberada(true);
+    } else {
+      alert("Senha incorreta!");
+    }
+    setSenha("");
+  };
+
+  // 🚀 Salvar Setor
+const salvarSetor = async () => {
+  if (!operador.trim()) {
+    alert("⚠️ Você precisa informar o operador antes de salvar.");
+    return;
+  }
+  if (!loja.trim()) {
+    alert("⚠️ Você precisa informar a loja antes de salvar.");
+    return;
+  }
+
+  try {
+    const respostas = await Promise.all(
+      produtos
+        .filter((p) => p.codigo_barra && !p.descricao.includes("❌"))
+        .map((p) =>
+          fetch("https://n8n.iastec.servicos.ws/webhook/salvar_setor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              usuario: operador,
+              loja,
+              setor,
+              codigo_barra: p.codigo_barra,
+              descricao: p.descricao,
+              quantidade: p.quantidade || 1,
+              atualizado_em: new Date().toISOString(),
+            }),
+          }).then((res) => res.json())
+        )
+    );
+
+    // 🚨 Verifica se algum retorno veio com "acima do limite"
+    const limiteExcedido = respostas.find(
+      (r) => r.quantidade_maxima === "acima do limite"
+    );
+    if (limiteExcedido) {
+      alert("🚫 Quantidade acima do limite! Entre em contato pelo Chat para fazer a liberação, Digite : Licença e o nome da loja");
+      return; // interrompe aqui, não cai no "sucesso"
+    }
+
+    // 🚨 Se tiver algum erro vindo do backend
+    const erro = respostas.find((r) => r.status === "erro");
+    if (erro) {
+      alert("❌ Erro: " + erro.mensagem);
+      return;
+    }
+
+    // ✅ Se chegou aqui, é porque salvou de verdade
+    alert("✅ Setor salvo com sucesso!");
+    setTotalSalvo(totalSalvo + totalPendente);
+    setTotalPendente(0);
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Erro ao salvar setor");
+  }
+};
+
+  // 🚀 Finalizar Setor
+  const finalizarSetor = async () => {
+    if (!operador.trim()) {
+      alert("⚠️ Você precisa informar o operador antes de finalizar.");
+      return;
+    }
+    if (!loja.trim()) {
+      alert("⚠️ Você precisa informar a loja antes de finalizar.");
+      return;
+    }
+
+    try {
+      const respostas = await Promise.all(
+        produtos
+          .filter((p) => p.codigo_barra && !p.descricao.includes("❌"))
+          .map((p) =>
+            fetch("https://n8n.iastec.servicos.ws/webhook/finalizar_setor", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                usuario: operador,
+                loja,
+                setor,
+                codigo_barra: p.codigo_barra,
+                descricao: p.descricao,
+                quantidade: p.quantidade || 1,
+              }),
+            }).then((res) => res.json())
+          )
+      );
+
+      // 🚨 Verifica se algum retorno veio com "acima do limite"
+      if (respostas.some((r) => r.quantidade_maxima === "acima do limite")) {
+        alert("🚫 Quantidade acima do limite! Não é permitido finalizar.");
+        return;
+      }
+
+      if (respostas.some((r) => r.status === "erro")) {
+        alert(respostas.find((r) => r.status === "erro").mensagem);
+      } else {
+        alert("✅ Setor finalizado com sucesso!");
+        setProdutos([{ codigo_barra: "", descricao: "", quantidade: 1 }]);
+        setTotalSalvo(0);
+        setTotalPendente(0);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Erro ao finalizar setor");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8">
+      <h1 className="text-2xl font-bold mb-4">📦 Inventário por Setor</h1>
+
+      <div className="bg-white shadow-md rounded p-6 w-full max-w-5xl">
+        <div className="flex gap-4 mb-4">
+          <label className="flex-1">
+            <span className="block text-gray-700 font-medium">📋 Nome do Setor</span>
+            <input
+              className="border rounded w-full p-2 mt-1"
+              value={setor}
+              onChange={(e) => setSetor(e.target.value)}
+            />
+          </label>
+          <label className="flex-1">
+            <span className="block text-gray-700 font-medium">👨 Operador</span>
+            <input
+              className="border rounded w-full p-2 mt-1"
+              value={operador}
+              onChange={(e) => setOperador(e.target.value)}
+            />
+          </label>
+          <label className="flex-1">
+            <span className="block text-gray-700 font-medium">🏬 Loja</span>
+            <input
+              className="border rounded w-full p-2 mt-1"
+              value={loja}
+              onChange={(e) => setLoja(e.target.value)}
+            />
+          </label>
+        </div>
+
+        {/* 🔹 Totais */}
+        <div className="mb-4 flex gap-8 text-lg font-semibold">
+          <span className="text-green-700">✅ Total Salvo: {totalSalvo}</span>
+          <span className="text-yellow-600">⏳ Pendente: {totalPendente}</span>
+        </div>
+
+        <table className="w-full mb-4 border">
+          <thead className="bg-blue-500 text-white">
+            <tr>
+              <th className="px-4 py-2">Código de Barras</th>
+              <th className="px-4 py-2">Descrição</th>
+              {quantidadeLiberada && <th className="px-4 py-2">Quantidade</th>}
+              <th className="px-4 py-2 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {produtos.map((p, idx) => (
+              <tr key={idx} className="border-b">
+                <td>
+                  <input
+                    ref={(el) => (inputRefs.current[idx] = el)}
+                    value={p.codigo_barra}
+                    onChange={(e) => {
+                      const newProdutos = [...produtos];
+                      newProdutos[idx].codigo_barra = e.target.value;
+                      setProdutos(newProdutos);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        validarProduto(idx);
+                      }
+                    }}
+                    className="border rounded p-2 w-full"
+                    autoFocus={idx === produtos.length - 1}
+                  />
+                </td>
+                <td>
+                  <input
+                    value={p.descricao}
+                    readOnly
+                    className="border rounded p-2 w-full bg-gray-100 text-gray-700"
+                  />
+                </td>
+                {quantidadeLiberada && (
+                  <td>
+                    <input
+                      type="number"
+                      value={p.quantidade}
+                      onChange={(e) => {
+                        const newProdutos = [...produtos];
+                        newProdutos[idx].quantidade = e.target.value;
+                        setProdutos(newProdutos);
+                      }}
+                      className="border rounded p-2 w-24"
+                    />
+                  </td>
+                )}
+                <td className="text-center flex gap-2 justify-center">
+                  <button
+                    onClick={() => salvarItem(idx)}
+                    className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500"
+                  >
+                    💾
+                  </button>
+                  <button
+                    onClick={() => removeProduto(idx)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {!quantidadeLiberada && (
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="password"
+              placeholder="Senha p/ liberar quantidade"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="border rounded p-2"
+            />
+            <button
+              onClick={liberarQuantidade}
+              className="bg-gray-700 text-white px-4 py-2 rounded"
+            >
+              🔓 Liberar Quantidade
+            </button>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-4 mt-6">
+          <button
+            onClick={salvarSetor}
+            className="bg-yellow-400 px-6 py-2 rounded font-bold"
+          >
+            💾 Salvar Setor
+          </button>
+          <button
+            onClick={finalizarSetor}
+            className="bg-green-600 text-white px-6 py-2 rounded font-bold"
+          >
+            ✅ Finalizar Setor
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
