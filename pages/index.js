@@ -154,43 +154,49 @@ export default function Home() {
               👋 Bem-vindo, {session.user?.name || session.user?.email}
             </h2>
 
-            {/* Expiração */}
+            {/* Data de Expiração */}
             {session.user?.expiracao && (
               <p className="text-gray-600 mb-4">
                 Expira em: {formatDate(session.user.expiracao)}
               </p>
             )}
 
+            {/* Mensagem conforme role */}
             {session.user?.role === "trial" ? (
               <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-                Você está usando a versão de teste (1 dia).
-                <br />
+                🚀 Você está usando a <b>versão de teste (1 dia)</b>.<br />
                 👉 Para continuar após expirar, entre com sua conta Google.
               </div>
             ) : (
-              <div className="space-y-3">
-                <Link
-                  href="/dashboard"
-                  className="block bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
-                >
-                  📊 Acessar Dashboard
-                </Link>
-                {session.user?.role === "admin" && (
-                  <Link
-                    href="/admin"
-                    className="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded"
-                  >
-                    Painel Admin
-                  </Link>
-                )}
-                <Link
-                  href="/contagem"
-                  className="block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-                >
-                  Inventário
-                </Link>
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                ✅ Seu acesso via <b>Google</b> é válido por <b>10 dias</b>.<br />
+                👉 Após expirar, basta logar novamente para renovar seu acesso.
               </div>
             )}
+
+            {/* Links de navegação */}
+            <div className="space-y-3">
+              <Link
+                href="/dashboard"
+                className="block bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
+              >
+                📊 Acessar Dashboard
+              </Link>
+              {session.user?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded"
+                >
+                  Painel Admin
+                </Link>
+              )}
+              <Link
+                href="/contagem"
+                className="block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+              >
+                Inventário
+              </Link>
+            </div>
 
             {/* Botão sair */}
             <button

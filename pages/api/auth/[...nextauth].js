@@ -9,11 +9,13 @@ const pool = new Pool({
 
 export const authOptions = {
   providers: [
+    // 🔹 Login via Google
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
 
+    // 🔹 Login via Credenciais (Manual + Trial)
     CredentialsProvider({
       name: "Credenciais",
       credentials: {
@@ -22,7 +24,6 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          // 🔹 CORRIGIDO: usar pool.query em vez de db.query
           const result = await pool.query(
             "SELECT * FROM usuarios WHERE email=$1",
             [credentials.email]
@@ -32,7 +33,11 @@ export const authOptions = {
 
           const u = result.rows[0];
 
-          // Aceitamos "senha trial" para testes ou senha real do banco
+          /**
+           * Credenciais aceitas:
+           * - role = trial && senha = "trial" => expira em 1 dia
+           * - user normal => senha armazenada em u.senha
+           */
           if ((u.role === "trial" && credentials.senha === "trial") ||
               (u.senha && credentials.senha === u.senha)) {
             return {
@@ -54,29 +59,32 @@ export const authOptions = {
   ],
 
   callbacks: {
+    /**
+     * 🔹 Ao logar (Google ou Credenciais)
+     */
     async signIn({ user, account }) {
       if (account.provider === "google") {
         const client = await pool.connect();
         try {
           const res = await client.query(
-            "SELECT id, expiracao FROM usuarios WHERE email = $1",
+            "SELECT id FROM usuarios WHERE email = $1",
             [user.email]
           );
 
           if (res.rows.length === 0) {
-            // Novo usuário → cadastra com expiração de 10 dias
+            // Novo usuário Google → cria com expiração +10 dias
             await client.query(
               `INSERT INTO usuarios (nome, email, google_id, role, expiracao)
                VALUES ($1, $2, $3, 'user', NOW() + interval '10 days')`,
               [user.name, user.email, user.id]
             );
           } else {
-            // Usuário existente → atualiza google_id e mantém expiração
+            // Já existe → atualiza google_id e renova expiração +10 dias
             await client.query(
               `UPDATE usuarios
                SET google_id = $1,
                    nome = $2,
-                   expiracao = COALESCE(expiracao, NOW() + interval '10 days')
+                   expiracao = NOW() + interval '10 days'
                WHERE email = $3`,
               [user.id, user.name, user.email]
             );
@@ -88,6 +96,9 @@ export const authOptions = {
       return true;
     },
 
+    /**
+     * 🔹 Retorna dados extras na sessão
+     */
     async session({ session }) {
       const client = await pool.connect();
       try {
