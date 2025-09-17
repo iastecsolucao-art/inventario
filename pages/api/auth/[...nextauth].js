@@ -13,31 +13,41 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+
     CredentialsProvider({
       name: "Credenciais",
       credentials: {
         email: { label: "Email", type: "text" },
-        senha: { label: "Senha", type: "password" },
+        senha: { label: "Senha", type: "password" }
       },
       async authorize(credentials) {
-        const client = await pool.connect();
         try {
-          const res = await client.query(
-            "SELECT * FROM usuarios WHERE email = $1 AND senha = crypt($2, senha)",
-            [credentials.email, credentials.senha]
+          // 🔹 CORRIGIDO: usar pool.query em vez de db.query
+          const result = await pool.query(
+            "SELECT * FROM usuarios WHERE email=$1",
+            [credentials.email]
           );
-          if (res.rows.length > 0) {
+
+          if (result.rows.length === 0) return null;
+
+          const u = result.rows[0];
+
+          // Aceitamos "senha trial" para testes ou senha real do banco
+          if ((u.role === "trial" && credentials.senha === "trial") ||
+              (u.senha && credentials.senha === u.senha)) {
             return {
-              id: res.rows[0].id,
-              name: res.rows[0].nome,
-              email: res.rows[0].email,
-              role: res.rows[0].role,
-              expiracao: res.rows[0].expiracao, // 🔹 já retorna expiracao no login manual
+              id: u.id,
+              name: u.nome,
+              email: u.email,
+              role: u.role,
+              expiracao: u.expiracao
             };
           }
+
           return null;
-        } finally {
-          client.release();
+        } catch (err) {
+          console.error("Erro no login credenciais:", err);
+          return null;
         }
       },
     }),
@@ -54,14 +64,14 @@ export const authOptions = {
           );
 
           if (res.rows.length === 0) {
-            // Novo usuário → cria com expiracao 10 dias
+            // Novo usuário → cadastra com expiração de 10 dias
             await client.query(
               `INSERT INTO usuarios (nome, email, google_id, role, expiracao)
                VALUES ($1, $2, $3, 'user', NOW() + interval '10 days')`,
               [user.name, user.email, user.id]
             );
           } else {
-            // Já existe → atualiza google_id e garante expiracao
+            // Usuário existente → atualiza google_id e mantém expiração
             await client.query(
               `UPDATE usuarios
                SET google_id = $1,
@@ -78,7 +88,6 @@ export const authOptions = {
       return true;
     },
 
-    // 🔹 Aqui traz o role e expiracao direto para session.user
     async session({ session }) {
       const client = await pool.connect();
       try {
@@ -96,6 +105,10 @@ export const authOptions = {
       }
       return session;
     },
+  },
+
+  session: {
+    strategy: "jwt",
   },
 };
 

@@ -6,19 +6,45 @@ export default function Home() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [trialMode, setTrialMode] = useState(false);
+  const [trialNome, setTrialNome] = useState("");
+  const [trialEmail, setTrialEmail] = useState("");
 
-  // 🔹 Login manual
+  // 🔹 Login manual (credenciais)
   async function handleCredLogin(e) {
     e.preventDefault();
     await signIn("credentials", {
       email,
       senha,
       redirect: true,
-      callbackUrl: "/", // Redireciona para home após login
+      callbackUrl: "/",
     });
   }
 
-  // 🔹 Formatar data
+  // 🔹 Ativar Trial
+  async function handleTrialAccess(e) {
+    e.preventDefault();
+
+    const res = await fetch("/api/free-trial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: trialNome, email: trialEmail }),
+    });
+
+    if (res.ok) {
+      // após criar usuário trial → loga com credenciais simuladas
+      await signIn("credentials", {
+        email: trialEmail,
+        senha: "trial", // senha dummy
+        redirect: true,
+        callbackUrl: "/",
+      });
+    } else {
+      alert("Erro ao iniciar teste gratuito.");
+    }
+  }
+
+  // 🔹 Format Date
   function formatDate(dateString) {
     if (!dateString) return null;
     const d = new Date(dateString);
@@ -37,87 +63,118 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <main className="flex flex-col flex-1 items-center justify-center text-center px-6">
         {!session ? (
-          // 🔹 Tela de login
-          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md">
-            <h2 className="text-xl font-bold mb-4">Acesse sua conta</h2>
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">
+              Bem-vindo ao <span className="text-blue-600">App IasTec</span>
+            </h2>
+            <p className="text-gray-600 mb-4">Escolha uma forma de acesso</p>
 
-            <button
-              onClick={() => signIn("google")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded w-full mb-4"
-            >
-              Entrar com Google
-            </button>
+            {!trialMode ? (
+              <>
+                {/* Botão Google */}
+                <button
+                  onClick={() => signIn("google")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded w-full mb-4"
+                >
+                  Entrar com Google
+                </button>
 
-            <div className="text-gray-500 my-3">ou</div>
+                {/* Login Manual */}
+                <form onSubmit={handleCredLogin} className="space-y-3 mb-4">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                  <input
+                    type="password"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    placeholder="Senha"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full"
+                  >
+                    Entrar
+                  </button>
+                </form>
 
-            {/* Formulário login manual */}
-            <form onSubmit={handleCredLogin} className="space-y-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full border rounded px-3 py-2"
-                required
-              />
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="Senha"
-                className="w-full border rounded px-3 py-2"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded w-full"
-              >
-                Entrar
-              </button>
-            </form>
+                {/* 🚀 Botão Trial */}
+                <button
+                  onClick={() => setTrialMode(true)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded w-full"
+                >
+                  🚀 Testar por 1 dia grátis
+                </button>
+              </>
+            ) : (
+              // Form Trial
+              <form onSubmit={handleTrialAccess} className="space-y-3">
+                <h3 className="font-semibold mb-2">Ativar Teste Grátis (1 dia)</h3>
+                <input
+                  type="text"
+                  value={trialNome}
+                  onChange={(e) => setTrialNome(e.target.value)}
+                  placeholder="Nome"
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="email"
+                  value={trialEmail}
+                  onChange={(e) => setTrialEmail(e.target.value)}
+                  placeholder="Email"
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded w-full"
+                >
+                  Ativar Teste
+                </button>
+                <button
+                  type="button"
+                  className="mt-2 text-sm underline"
+                  onClick={() => setTrialMode(false)}
+                >
+                  Voltar
+                </button>
+              </form>
+            )}
           </div>
         ) : (
-          // 🔹 Tela após login
+          // 🔹 Tela logado
           <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-xl">
             <h2 className="text-2xl font-bold mb-4">
               👋 Bem-vindo, {session.user?.name || session.user?.email}
             </h2>
 
-            {/* Papel (role) */}
-            <p className="text-gray-700 mb-2">
-              Perfil:{" "}
-              <span className="font-semibold">{session.user?.role || "Usuário"}</span>
-            </p>
-
-            {/* Data de expiração */}
+            {/* Expiração */}
             {session.user?.expiracao && (
-              <p
-                className={`mb-4 ${
-                  expirado ? "text-red-600 font-bold" : "text-gray-600"
-                }`}
-              >
-                Expira em:{" "}
-                <span>{formatDate(session.user.expiracao)}</span>
+              <p className="text-gray-600 mb-4">
+                Expira em: {formatDate(session.user.expiracao)}
               </p>
             )}
 
-            {/* Se expirado → alerta */}
-            {expirado ? (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                Sua conta expirou ❌<br />
-                Entre em contato com o administrador para renovação.
+            {session.user?.role === "trial" ? (
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                Você está usando a versão de teste (1 dia).
+                <br />
+                👉 Para continuar após expirar, entre com sua conta Google.
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Dashboard */}
                 <Link
                   href="/dashboard"
                   className="block bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
                 >
                   📊 Acessar Dashboard
                 </Link>
-
-                {/* Links específicos */}
                 {session.user?.role === "admin" && (
                   <Link
                     href="/admin"
@@ -147,7 +204,7 @@ export default function Home() {
       </main>
 
       <footer className="w-full bg-gray-200 text-center py-4 text-sm text-gray-600">
-        iastec 2025 - versão 1
+        iastec 2025 - versão 3.0
       </footer>
     </div>
   );
