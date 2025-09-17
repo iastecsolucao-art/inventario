@@ -1,12 +1,13 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
-  // 🔹 Função para login com credenciais
+  // 🔹 Login manual
   async function handleCredLogin(e) {
     e.preventDefault();
     await signIn("credentials", {
@@ -17,7 +18,7 @@ export default function Home() {
     });
   }
 
-  // 🔹 Formatar data de expiração
+  // 🔹 Formatar data
   function formatDate(dateString) {
     if (!dateString) return null;
     const d = new Date(dateString);
@@ -28,7 +29,6 @@ export default function Home() {
     });
   }
 
-  // 🔹 Verifica expiração
   const expirado =
     session?.user?.expiracao &&
     new Date(session.user.expiracao) < new Date();
@@ -41,7 +41,6 @@ export default function Home() {
           <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-md">
             <h2 className="text-xl font-bold mb-4">Acesse sua conta</h2>
 
-            {/* Botão login com Google */}
             <button
               onClick={() => signIn("google")}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded w-full mb-4"
@@ -80,64 +79,63 @@ export default function Home() {
         ) : (
           // 🔹 Tela após login
           <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-xl">
-            <h2 className="text-xl font-bold mb-4">
-              Bem-vindo ao Sistema, {session.user?.name || session.user?.email}
+            <h2 className="text-2xl font-bold mb-4">
+              👋 Bem-vindo, {session.user?.name || session.user?.email}
             </h2>
 
+            {/* Papel (role) */}
             <p className="text-gray-700 mb-2">
-              Você está logado como:{" "}
-              <span className="font-semibold">{session.user?.role || "user"}</span>
+              Perfil:{" "}
+              <span className="font-semibold">{session.user?.role || "Usuário"}</span>
             </p>
 
-            {/* 🔹 Mostrar data de expiração */}
+            {/* Data de expiração */}
             {session.user?.expiracao && (
               <p
                 className={`mb-4 ${
                   expirado ? "text-red-600 font-bold" : "text-gray-600"
                 }`}
               >
-                Sua conta expira em:{" "}
-                <span>
-                  {formatDate(session.user.expiracao)}
-                </span>
+                Expira em:{" "}
+                <span>{formatDate(session.user.expiracao)}</span>
               </p>
             )}
 
-            {/* 🔹 Bloqueia menús se expirado */}
+            {/* Se expirado → alerta */}
             {expirado ? (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 Sua conta expirou ❌<br />
-                Entre em contato com o administrador para renovar o acesso.
+                Entre em contato com o administrador para renovação.
               </div>
             ) : (
-              <>
-                {session.user?.role === "admin" ? (
-                  <div>
-                    <a
-                      href="/admin"
-                      className="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded mb-2"
-                    >
-                      Painel Admin
-                    </a>
-                    <a
-                      href="/contagem"
-                      className="block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-                    >
-                      Inventário
-                    </a>
-                  </div>
-                ) : (
-                  <a
-                    href="/contagem"
-                    className="block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+              <div className="space-y-3">
+                {/* Dashboard */}
+                <Link
+                  href="/dashboard"
+                  className="block bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
+                >
+                  📊 Acessar Dashboard
+                </Link>
+
+                {/* Links específicos */}
+                {session.user?.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded"
                   >
-                    Inventário
-                  </a>
+                    Painel Admin
+                  </Link>
                 )}
-              </>
+                <Link
+                  href="/contagem"
+                  className="block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+                >
+                  Inventário
+                </Link>
+              </div>
             )}
 
-            {/* 🔹 Botão sair */}
+            {/* Botão sair */}
             <button
               onClick={() => signOut()}
               className="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded"

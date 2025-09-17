@@ -7,9 +7,16 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const { data: session } = useSession();
 
-  const expirado =
-    session?.user?.expiracao &&
-    new Date(session.user.expiracao) < new Date();
+  // 🔹 Calcular dias de expiração
+  let diasRestantes = null;
+  if (session?.user?.expiracao) {
+    const expDate = new Date(session.user.expiracao);
+    const hoje = new Date();
+    const diff = Math.ceil((expDate - hoje) / (1000 * 60 * 60 * 24));
+    diasRestantes = diff;
+  }
+
+  const expirado = diasRestantes !== null && diasRestantes < 0;
 
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
@@ -17,15 +24,17 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-blue-600 p-4 flex items-center justify-between shadow-lg">
-      {/* Logo */}
-      <div className="text-white font-bold text-lg">📊 App IasTec</div>
+      {/* Botão Home */}
+      <div className="flex items-center space-x-4">
+        <Link href="/" className="text-white font-bold text-lg hover:underline">
+          🏠 Home
+        </Link>
+      </div>
 
-      {/* Menu desktop */}
+      {/* Desktop menu */}
       {session && !expirado && (
         <div className="hidden md:flex space-x-6 text-white items-center relative">
-          
-          {/* Dashboard */}
-          <Link href="/dashboard" className="hover:underline font-semibold text-yellow-300">
+          <Link href="/dashboard" className="hover:underline text-yellow-300 font-semibold">
             Dashboard
           </Link>
 
@@ -69,16 +78,39 @@ export default function Navbar() {
             </div>
           </div>
 
+          {/* Infos do usuário com badge */}
+          <div className="ml-4 flex items-center space-x-2">
+            <span className="text-sm text-gray-200">
+              Bem-vindo, <strong>{session.user?.name}</strong>
+            </span>
+            {diasRestantes !== null && (
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded ${
+                  expirado
+                    ? "bg-red-600 text-white"
+                    : diasRestantes <= 5
+                    ? "bg-yellow-400 text-black"
+                    : "bg-green-600 text-white"
+                }`}
+              >
+                {expirado
+                  ? "Expirado"
+                  : `Expira em ${diasRestantes} dia${diasRestantes > 1 ? "s" : ""}`}
+              </span>
+            )}
+          </div>
+
+          {/* Botão logout */}
           <button
             onClick={() => signOut()}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded ml-3"
           >
             Sair
           </button>
         </div>
       )}
 
-      {/* Botão mobile */}
+      {/* Botão mobile ☰ */}
       {session && !expirado && (
         <button
           className="md:hidden text-white focus:outline-none text-xl"
@@ -88,18 +120,15 @@ export default function Navbar() {
         </button>
       )}
 
-      {/* Menu Mobile */}
+      {/* Mobile menu */}
       {menuOpen && session && !expirado && (
-        <div className="absolute top-full left-0 w-full bg-blue-700 flex flex-col text-white md:hidden z-50 shadow-lg">
-          <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b font-semibold text-yellow-300">Dashboard</Link>
+        <div className="absolute top-full left-0 w-full bg-blue-700 flex flex-col text-white md:hidden z-50 shadow-lg pb-4">
+          <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b font-semibold text-yellow-300">
+            Dashboard
+          </Link>
 
           {/* Inventário */}
-          <button
-            onClick={() => toggleDropdown("inventario")}
-            className="px-4 py-2 border-b text-left"
-          >
-            Inventário ▾
-          </button>
+          <button onClick={() => toggleDropdown("inventario")} className="px-4 py-2 border-b text-left">Inventário ▾</button>
           {openDropdown === "inventario" && (
             <div className="bg-blue-800">
               <Link href="/contagem" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Contagem</Link>
@@ -110,12 +139,7 @@ export default function Navbar() {
           )}
 
           {/* Produtos */}
-          <button
-            onClick={() => toggleDropdown("produtos")}
-            className="px-4 py-2 border-b text-left"
-          >
-            Produtos ▾
-          </button>
+          <button onClick={() => toggleDropdown("produtos")} className="px-4 py-2 border-b text-left">Produtos ▾</button>
           {openDropdown === "produtos" && (
             <div className="bg-blue-800">
               <Link href="/produtos" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Cadastro Produto</Link>
@@ -124,12 +148,7 @@ export default function Navbar() {
           )}
 
           {/* Compras */}
-          <button
-            onClick={() => toggleDropdown("compras")}
-            className="px-4 py-2 border-b text-left"
-          >
-            Compras ▾
-          </button>
+          <button onClick={() => toggleDropdown("compras")} className="px-4 py-2 border-b text-left">Compras ▾</button>
           {openDropdown === "compras" && (
             <div className="bg-blue-800">
               <Link href="/compras" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Nova Compra</Link>
@@ -140,12 +159,7 @@ export default function Navbar() {
           )}
 
           {/* Comercial */}
-          <button
-            onClick={() => toggleDropdown("comercial")}
-            className="px-4 py-2 border-b text-left"
-          >
-            Comercial ▾
-          </button>
+          <button onClick={() => toggleDropdown("comercial")} className="px-4 py-2 border-b text-left">Comercial ▾</button>
           {openDropdown === "comercial" && (
             <div className="bg-blue-800">
               <Link href="/orcamento" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Orçamentos</Link>
@@ -153,10 +167,29 @@ export default function Navbar() {
             </div>
           )}
 
-          <button
-            onClick={() => { setMenuOpen(false); signOut(); }}
-            className="px-4 py-2 text-left bg-red-500 hover:bg-red-600"
-          >
+          {/* Badge do usuário no mobile */}
+          <div className="px-4 py-2 text-sm">
+            👤 {session.user?.name}{" "}
+            {diasRestantes !== null && (
+              <span
+                className={`ml-2 px-2 py-1 text-xs font-semibold rounded ${
+                  expirado
+                    ? "bg-red-600 text-white"
+                    : diasRestantes <= 5
+                    ? "bg-yellow-400 text-black"
+                    : "bg-green-600 text-white"
+                }`}
+              >
+                {expirado
+                  ? "Expirado"
+                  : `Expira em ${diasRestantes} dia${diasRestantes > 1 ? "s" : ""}`}
+              </span>
+            )}
+          </div>
+
+          {/* Sair */}
+          <button onClick={() => { setMenuOpen(false); signOut(); }}
+            className="mt-2 mx-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
             Sair
           </button>
         </div>
