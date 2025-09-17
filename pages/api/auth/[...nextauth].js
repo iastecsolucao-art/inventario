@@ -32,6 +32,7 @@ export const authOptions = {
               name: res.rows[0].nome,
               email: res.rows[0].email,
               role: res.rows[0].role,
+              expiracao: res.rows[0].expiracao, // 🔹 já retorna expiracao no login manual
             };
           }
           return null;
@@ -43,26 +44,29 @@ export const authOptions = {
   ],
 
   callbacks: {
-    // 👉 Sempre depois do login
     async signIn({ user, account }) {
       if (account.provider === "google") {
         const client = await pool.connect();
         try {
-          // Verifica se já existe no banco
-          const res = await client.query("SELECT id FROM usuarios WHERE email = $1", [user.email]);
+          const res = await client.query(
+            "SELECT id, expiracao FROM usuarios WHERE email = $1",
+            [user.email]
+          );
 
           if (res.rows.length === 0) {
-            // Não existe → cria como user
+            // Novo usuário → cria com expiracao 10 dias
             await client.query(
-              `INSERT INTO usuarios (nome, email, google_id, role)
-               VALUES ($1, $2, $3, 'user')`,
+              `INSERT INTO usuarios (nome, email, google_id, role, expiracao)
+               VALUES ($1, $2, $3, 'user', NOW() + interval '10 days')`,
               [user.name, user.email, user.id]
             );
           } else {
-            // Já existe → atualiza google_id
+            // Já existe → atualiza google_id e garante expiracao
             await client.query(
               `UPDATE usuarios
-               SET google_id = $1, nome = $2
+               SET google_id = $1,
+                   nome = $2,
+                   expiracao = COALESCE(expiracao, NOW() + interval '10 days')
                WHERE email = $3`,
               [user.id, user.name, user.email]
             );
@@ -74,14 +78,19 @@ export const authOptions = {
       return true;
     },
 
-    // Incluir role no session
+    // 🔹 Aqui traz o role e expiracao direto para session.user
     async session({ session }) {
       const client = await pool.connect();
       try {
-        const res = await client.query("SELECT role FROM usuarios WHERE email = $1", [
-          session.user.email,
-        ]);
-        session.user.role = res.rows[0]?.role || "user";
+        const res = await client.query(
+          "SELECT role, expiracao FROM usuarios WHERE email = $1",
+          [session.user.email]
+        );
+
+        if (res.rows.length > 0) {
+          session.user.role = res.rows[0].role || "user";
+          session.user.expiracao = res.rows[0].expiracao;
+        }
       } finally {
         client.release();
       }
