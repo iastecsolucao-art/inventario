@@ -18,15 +18,27 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-blue-600 p-4 flex items-center justify-between shadow-lg">
       {/* Logo */}
-      <div className="text-white font-bold text-lg">📦 App IasTec</div>
+      <div className="text-white font-bold text-lg">📊 App IasTec</div>
 
       {/* Menu desktop */}
       {session && !expirado && (
         <div className="hidden md:flex space-x-6 text-white items-center relative">
-          <Link href="/" className="hover:underline">Home</Link>
-          <Link href="/upload" className="hover:underline">Upload</Link>
-          <Link href="/download" className="hover:underline">Download</Link>
-          <Link href="/contagem" className="hover:underline">Inventário</Link>
+          
+          {/* Dashboard */}
+          <Link href="/dashboard" className="hover:underline font-semibold text-yellow-300">
+            Dashboard
+          </Link>
+
+          {/* Inventário */}
+          <div className="relative group">
+            <button className="hover:underline">Inventário ▾</button>
+            <div className="absolute hidden group-hover:block bg-white text-black mt-2 rounded shadow-lg w-52">
+              <Link href="/contagem" className="block px-4 py-2 hover:bg-gray-100">Contagem</Link>
+              <Link href="/upload" className="block px-4 py-2 hover:bg-gray-100">Upload</Link>
+              <Link href="/download" className="block px-4 py-2 hover:bg-gray-100">Download</Link>
+              <Link href="/relatorios" className="block px-4 py-2 hover:bg-gray-100">Relatórios</Link>
+            </div>
+          </div>
 
           {/* Produtos */}
           <div className="relative group">
@@ -57,8 +69,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Link href="/relatorios" className="hover:underline">Relatórios</Link>
-
           <button
             onClick={() => signOut()}
             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
@@ -78,15 +88,28 @@ export default function Navbar() {
         </button>
       )}
 
-      {/* Menu mobile */}
+      {/* Menu Mobile */}
       {menuOpen && session && !expirado && (
         <div className="absolute top-full left-0 w-full bg-blue-700 flex flex-col text-white md:hidden z-50 shadow-lg">
-          <Link href="/" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Home</Link>
-          <Link href="/upload" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Upload</Link>
-          <Link href="/download" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Download</Link>
-          <Link href="/contagem" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Inventário</Link>
+          <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b font-semibold text-yellow-300">Dashboard</Link>
 
-          {/* Dropdown Produtos */}
+          {/* Inventário */}
+          <button
+            onClick={() => toggleDropdown("inventario")}
+            className="px-4 py-2 border-b text-left"
+          >
+            Inventário ▾
+          </button>
+          {openDropdown === "inventario" && (
+            <div className="bg-blue-800">
+              <Link href="/contagem" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Contagem</Link>
+              <Link href="/upload" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Upload</Link>
+              <Link href="/download" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Download</Link>
+              <Link href="/relatorios" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Relatórios</Link>
+            </div>
+          )}
+
+          {/* Produtos */}
           <button
             onClick={() => toggleDropdown("produtos")}
             className="px-4 py-2 border-b text-left"
@@ -100,7 +123,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Dropdown Compras */}
+          {/* Compras */}
           <button
             onClick={() => toggleDropdown("compras")}
             className="px-4 py-2 border-b text-left"
@@ -116,7 +139,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Dropdown Comercial */}
+          {/* Comercial */}
           <button
             onClick={() => toggleDropdown("comercial")}
             className="px-4 py-2 border-b text-left"
@@ -129,8 +152,6 @@ export default function Navbar() {
               <Link href="/vendas" onClick={() => setMenuOpen(false)} className="block px-6 py-2 border-b">Vendas</Link>
             </div>
           )}
-
-          <Link href="/relatorios" onClick={() => setMenuOpen(false)} className="px-4 py-2 border-b">Relatórios</Link>
 
           <button
             onClick={() => { setMenuOpen(false); signOut(); }}
